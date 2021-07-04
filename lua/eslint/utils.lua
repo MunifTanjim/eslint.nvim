@@ -1,6 +1,6 @@
 local find_git_ancestor = require("lspconfig.util").find_git_ancestor
 local find_package_json_ancestor = require("lspconfig.util").find_package_json_ancestor
-local is_file = require("lspconfig.util").path.is_file
+local path_join = require("lspconfig.util").path.join
 local options = require("eslint.options")
 
 local M = {}
@@ -181,43 +181,40 @@ function M.diagnostic_handler(params)
   return diagnostics
 end
 
-local function get_project_root()
-  local startpath = vim.api.nvim_buf_get_name(vim.api.nvim_get_current_buf())
+local function get_working_directory()
+  local startpath = vim.fn.getcwd()
   return find_git_ancestor(startpath) or find_package_json_ancestor(startpath)
 end
 
-local eslint_config_files = {
-  ".eslintrc",
-  ".eslintrc.js",
-  ".eslintrc.json",
-  ".eslintrc.yml",
-  ".eslintrc.yaml",
-}
+function M.config_file_exists()
+  local project_root = get_working_directory()
 
-local config_files_by_bin = {
-  eslint = eslint_config_files,
-  eslint_d = eslint_config_files,
-}
-
-function M.config_file_exists(bin)
-  local project_root = get_project_root()
-  for _, config_file in pairs(config_files_by_bin[bin]) do
-    if is_file(project_root .. "/" .. config_file) then
-      return true
-    end
+  if project_root then
+    return vim.tbl_count(
+      vim.fn.glob(".eslintrc*", true, true)
+    ) > 0
   end
 
   return false
 end
 
+---@param cmd string
+---@return nil|string
 function M.resolve_bin(cmd)
-  local project_root = get_project_root()
-  local local_bin = project_root .. "/node_modules/.bin" .. "/" .. cmd
-  if is_file(local_bin) then
-    return local_bin
-  else
+  local project_root = get_working_directory()
+
+  if project_root then
+    local local_bin = path_join(project_root, "/node_modules/.bin" ,cmd)
+    if vim.fn.executable(local_bin) == 1 then
+      return local_bin
+    end
+  end
+
+  if vim.fn.executable(cmd) == 1 then
     return cmd
   end
+
+  return nil
 end
 
 M.supported_filetypes = {

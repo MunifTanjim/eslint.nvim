@@ -21,36 +21,26 @@ Plug 'MunifTanjim/eslint.nvim'
 ## Setup
 
 `eslint.nvim` needs to be initialized with the `require("eslint").setup()` function.
-It recommended to initialize it inside lspconfig `tsserver`'s `on_attach` callback.
 
 For example:
 
 ```lua
-local lspconfig = require("lspconfig")
 local null_ls = require("null-ls")
 local eslint = require("eslint")
 
 null_ls.setup()
 
-lspconfig.tsserver.setup({
-  on_attach = function(client, bufnr)
-    -- other stuffs
-
-    eslint.setup({
-      bin = 'eslint', -- or `eslint_d`
-      code_actions = {
-        enable = true,
-        disable_rule_comment = {
-          enable = true,
-        },
-      },
-      diagnostics = {
-        enable = true,
-      },
-    })
-
-    -- other stuffs
-  end
+eslint.setup({
+  bin = 'eslint', -- or `eslint_d`
+  code_actions = {
+    enable = true,
+    disable_rule_comment = {
+      enable = true,
+    },
+  },
+  diagnostics = {
+    enable = true,
+  },
 })
 ```
 

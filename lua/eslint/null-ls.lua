@@ -22,8 +22,7 @@ local function get_on_output_fn(callback, handle_errors)
 end
 
 local function eslint_enabled()
-  local bin = options.get("bin")
-  return utils.config_file_exists(bin)
+  return utils.config_file_exists()
 end
 
 local M = {}
@@ -45,35 +44,43 @@ function M.setup()
     table.insert(sources, { method = method, generator = generator })
   end
 
-  if eslint_enabled() then
-    local eslint_bin = options.get("bin")
+  if not eslint_enabled() then
+    return
+  end
 
-    local eslint_opts = {
-      command = utils.resolve_bin(eslint_bin),
-      args = options.get("args"),
-      format = "json_raw",
-      to_stdin = true,
-      check_exit_code = function(code)
-        return code <= 1
-      end,
-      use_cache = true,
-    }
+  local eslint_bin = options.get("bin")
 
-    local function make_eslint_opts(handler, method)
-      local opts = vim.deepcopy(eslint_opts)
-      opts.on_output = get_on_output_fn(handler, method == null_ls.methods.DIAGNOSTICS)
-      return opts
-    end
+  local command = utils.resolve_bin(eslint_bin)
 
-    if options.get("code_actions.enable") then
-      local method = null_ls.methods.CODE_ACTION
-      add_source(method, null_ls.generator(make_eslint_opts(utils.code_action_handler, method)))
-    end
+  if not command then
+    return
+  end
 
-    if options.get("diagnostics.enable") then
-      local method = null_ls.methods.DIAGNOSTICS
-      add_source(method, null_ls.generator(make_eslint_opts(utils.diagnostic_handler, method)))
-    end
+  local eslint_opts = {
+    command = command,
+    args = options.get("args"),
+    format = "json_raw",
+    to_stdin = true,
+    check_exit_code = function(code)
+      return code <= 1
+    end,
+    use_cache = true,
+  }
+
+  local function make_eslint_opts(handler, method)
+    local opts = vim.deepcopy(eslint_opts)
+    opts.on_output = get_on_output_fn(handler, method == null_ls.methods.DIAGNOSTICS)
+    return opts
+  end
+
+  if options.get("code_actions.enable") then
+    local method = null_ls.methods.CODE_ACTION
+    add_source(method, null_ls.generator(make_eslint_opts(utils.code_action_handler, method)))
+  end
+
+  if options.get("diagnostics.enable") then
+    local method = null_ls.methods.DIAGNOSTICS
+    add_source(method, null_ls.generator(make_eslint_opts(utils.diagnostic_handler, method)))
   end
 
   if vim.tbl_count(sources) > 0 then
