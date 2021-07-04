@@ -17,6 +17,7 @@ local args_by_bin = {
   eslint   = { "-f", "json", "--stdin", "--stdin-filename", "$FILENAME" },
   eslint_d = { "-f", "json", "--stdin", "--stdin-filename", "$FILENAME" }
 }
+local disable_rule_comment_locations = { "same_line", "separate_line" }
 
 local default_options = {
   _initialized = false,
@@ -26,6 +27,7 @@ local default_options = {
     enable = true,
     disable_rule_comment = {
       enable = true,
+      location = "separate_line"
     },
   },
   diagnostics = {
@@ -51,6 +53,13 @@ local function get_validate_argmap(tbl, key)
       tbl["code_actions.disable_rule_comment.enable"],
       "boolean",
       true
+    },
+    ["code_actions.disable_rule_comment.location"] = {
+      tbl["code_actions.disable_rule_comment.location"],
+      function(val)
+        return val == nil or vim.tbl_contains(disable_rule_comment_locations, val)
+      end,
+      table.concat(disable_rule_comment_locations, ", ")
     },
     ["diagnostics.enable"] = {
       tbl["diagnostics.enable"],

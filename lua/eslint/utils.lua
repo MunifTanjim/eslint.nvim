@@ -102,9 +102,19 @@ local function generate_disable_actions(message, indentation, params)
 
   local actions = {}
   local line_title = "Disable " .. rule_id .. " for this line"
-  local line_new_text = indentation .. "// eslint-disable-next-line " .. rule_id
-  local row = message.line and message.line > 0 and message.line - 1 or 0
-  table.insert(actions, generate_edit_line_action(line_title, line_new_text, row, params))
+  local preferred_location = options.get("code_actions.disable_rule_comment.location")
+  local should_comment_on_same_line = preferred_location == "same_line" and message.line == message.endLine
+  if should_comment_on_same_line then
+    local line_new_text = " // eslint-disable-line " .. rule_id
+    local row = message.endLine - 1
+    local col = string.len(vim.api.nvim_buf_get_lines(params.bufnr, row, row + 1, true)[1])
+    local range = { row = row, col = col, end_row = row, end_col = col }
+    table.insert(actions, generate_edit_action(line_title, line_new_text, range, params))
+  else
+    local line_new_text = indentation .. "// eslint-disable-next-line " .. rule_id
+    local row = message.line and message.line > 0 and message.line - 1 or 0
+    table.insert(actions, generate_edit_line_action(line_title, line_new_text, row, params))
+  end
 
   local file_title = "Disable " .. rule_id .. " for the entire file"
   local file_new_text = "/* eslint-disable " .. rule_id .. " */"
