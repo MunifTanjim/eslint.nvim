@@ -38,9 +38,15 @@ lspconfig.tsserver.setup({
 
     eslint.setup({
       bin = 'eslint', -- or `eslint_d`
-      enable_code_actions = true,
-      enable_diagnostics = true,
-      enable_disable_comments = true,
+      code_actions = {
+        enable = true,
+        disable_rule_comment = {
+          enable = true,
+        },
+      },
+      diagnostics = {
+        enable = true,
+      },
     })
 
     -- other stuffs

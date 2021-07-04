@@ -65,12 +65,12 @@ function M.setup()
       return opts
     end
 
-    if options.get("enable_code_actions") then
+    if options.get("code_actions.enable") then
       local method = null_ls.methods.CODE_ACTION
       add_source(method, null_ls.generator(make_eslint_opts(utils.code_action_handler, method)))
     end
 
-    if options.get("enable_diagnostics") then
+    if options.get("diagnostics.enable") then
       local method = null_ls.methods.DIAGNOSTICS
       add_source(method, null_ls.generator(make_eslint_opts(utils.diagnostic_handler, method)))
     end

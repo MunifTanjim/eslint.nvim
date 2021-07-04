@@ -133,7 +133,7 @@ function M.code_action_handler(params)
       end
       if
         message.ruleId
-        and options.get("enable_disable_comments")
+        and options.get("code_actions.disable_rule_comment.enable")
         and not vim.tbl_contains(rules, message.ruleId)
       then
         table.insert(rules, message.ruleId)

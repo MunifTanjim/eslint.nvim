@@ -1,56 +1,78 @@
-local executables = { "eslint", "eslint_d" }
-local eslint_args = { "-f", "json", "--stdin", "--stdin-filename", "$FILENAME" }
+local function tbl_flatten(tbl, result, prefix, depth)
+  result = result or {}
+  prefix = prefix or ''
+  depth = type(depth) == 'number' and depth or 1
+  for k, v in pairs(tbl) do
+    if type(v) == 'table' and not vim.tbl_islist(v) and depth < 42 then
+      tbl_flatten(v, result, prefix .. k .. ".", depth + 1)
+    else
+      result[prefix .. k] = v
+    end
+  end
+  return result
+end
+
+local bins = { "eslint", "eslint_d" }
 local args_by_bin = {
-  eslint = eslint_args,
-  eslint_d = eslint_args
+  eslint   = { "-f", "json", "--stdin", "--stdin-filename", "$FILENAME" },
+  eslint_d = { "-f", "json", "--stdin", "--stdin-filename", "$FILENAME" }
 }
 
 local default_options = {
   _initialized = false,
   bin = "eslint",
-  enable_code_actions = true,
-  enable_diagnostics = true,
-  enable_disable_comments = true,
+  args = args_by_bin["eslint"],
+  code_actions = {
+    enable = true,
+    disable_rule_comment = {
+      enable = true,
+    },
+  },
+  diagnostics = {
+    enable = true,
+  },
 }
 
-local type_overrides = {
-  bin = function(v)
-    return not v or vim.tbl_contains(executables, v), table.concat(executables, ", ")
-  end,
-}
+local function get_validate_argmap(tbl, key)
+  local argmap = {
+    ["bin"] = {
+      tbl["bin"],
+      function(val)
+        return val == nil or vim.tbl_contains(bins, val)
+      end,
+      table.concat(bins, ", ")
+    },
+    ["code_actions.enable"] = {
+      tbl["code_actions.enable"],
+      "boolean",
+      true
+    },
+    ["code_actions.disable_rule_comment.enable"] = {
+      tbl["code_actions.disable_rule_comment.enable"],
+      "boolean",
+      true
+    },
+    ["diagnostics.enable"] = {
+      tbl["diagnostics.enable"],
+      "boolean",
+      true
+    },
+  }
 
-local function get_validate_args(name)
-  if vim.startswith(name, "_") then
-    return "nil", true
+  if type(key) == "string" then
+    return {
+      [key] = argmap[key]
+    }
   end
 
-  local override = type_overrides[name]
-
-  if type(override) == "table" then
-    return function(v)
-      return vim.tbl_contains(override, type(v)), table.concat(override, ", ")
-    end
-  end
-
-  if type(override) == "function" then
-    return override
-  end
-
-  return type(default_options[name]), true
+  return argmap
 end
-
-local options = vim.deepcopy(default_options)
 
 local function validate_options(user_options)
-  local to_validate = {}
-
-  for k in pairs(default_options) do
-    local arg_1, arg_2 = get_validate_args(k)
-    to_validate[k] = { user_options[k], arg_1, arg_2 }
-  end
-
-  vim.validate(to_validate)
+  vim.validate(get_validate_argmap(user_options))
 end
+
+local options = vim.deepcopy(tbl_flatten(default_options))
 
 local M = {}
 
@@ -59,20 +81,36 @@ function M.setup(user_options)
     return
   end
 
+  user_options = tbl_flatten(user_options)
+
   validate_options(user_options)
 
-  options = vim.tbl_extend("force", options, user_options)
+  options = vim.tbl_deep_extend("force", options, user_options)
   options.args = options.bin and args_by_bin[options.bin]
 
   options._initialized = true
 end
 
-function M.get(name)
-  if type(name) == "string" then
-    return vim.deepcopy(options[name])
+function M.get(key)
+  if type(key) == "string" then
+    return vim.deepcopy(options[key])
   end
 
   return vim.deepcopy(options)
+end
+
+function M.set(key, value)
+  local is_internal = vim.startswith(key, "_")
+
+  local argmap = get_validate_argmap({ [key] = value }, key)
+
+  if not is_internal and argmap[key] == nil then
+    return error(string.format("invalid key: %s", key))
+  end
+
+  vim.validate(argmap)
+
+  options[key] = vim.deepcopy(value)
 end
 
 function M.reset()
