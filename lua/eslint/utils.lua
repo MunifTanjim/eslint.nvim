@@ -67,7 +67,14 @@ local function generate_edit_action(title, new_text, range, params)
   return {
     title = string.format("[eslint] %s", title),
     action = function()
-      vim.api.nvim_buf_set_text(params.bufnr, range.row, range.col, range.end_row, range.end_col, vim.split(new_text, "\n"))
+      vim.api.nvim_buf_set_text(
+        params.bufnr,
+        range.row,
+        range.col,
+        range.end_row,
+        range.end_col,
+        vim.split(new_text, "\n")
+      )
     end,
   }
 end
@@ -209,9 +216,7 @@ function M.config_file_exists()
   local project_root = get_working_directory()
 
   if project_root then
-    return vim.tbl_count(
-      vim.fn.glob(".eslintrc*", true, true)
-    ) > 0
+    return vim.tbl_count(vim.fn.glob(".eslintrc*", true, true)) > 0
   end
 
   return false
@@ -223,7 +228,7 @@ function M.resolve_bin(cmd)
   local project_root = get_working_directory()
 
   if project_root then
-    local local_bin = path_join(project_root, "/node_modules/.bin" ,cmd)
+    local local_bin = path_join(project_root, "/node_modules/.bin", cmd)
     if vim.fn.executable(local_bin) == 1 then
       return local_bin
     end

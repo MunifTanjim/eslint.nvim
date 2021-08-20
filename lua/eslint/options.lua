@@ -1,9 +1,9 @@
 local function tbl_flatten(tbl, result, prefix, depth)
   result = result or {}
-  prefix = prefix or ''
-  depth = type(depth) == 'number' and depth or 1
+  prefix = prefix or ""
+  depth = type(depth) == "number" and depth or 1
   for k, v in pairs(tbl) do
-    if type(v) == 'table' and not vim.tbl_islist(v) and depth < 42 then
+    if type(v) == "table" and not vim.tbl_islist(v) and depth < 42 then
       tbl_flatten(v, result, prefix .. k .. ".", depth + 1)
     else
       result[prefix .. k] = v
@@ -14,8 +14,8 @@ end
 
 local bins = { "eslint", "eslint_d" }
 local args_by_bin = {
-  eslint   = { "-f", "json", "--stdin", "--stdin-filename", "$FILENAME" },
-  eslint_d = { "-f", "json", "--stdin", "--stdin-filename", "$FILENAME" }
+  eslint = { "-f", "json", "--stdin", "--stdin-filename", "$FILENAME" },
+  eslint_d = { "-f", "json", "--stdin", "--stdin-filename", "$FILENAME" },
 }
 local disable_rule_comment_locations = { "same_line", "separate_line" }
 
@@ -27,7 +27,7 @@ local default_options = {
     enable = true,
     disable_rule_comment = {
       enable = true,
-      location = "separate_line"
+      location = "separate_line",
     },
   },
   diagnostics = {
@@ -42,35 +42,35 @@ local function get_validate_argmap(tbl, key)
       function(val)
         return val == nil or vim.tbl_contains(bins, val)
       end,
-      table.concat(bins, ", ")
+      table.concat(bins, ", "),
     },
     ["code_actions.enable"] = {
       tbl["code_actions.enable"],
       "boolean",
-      true
+      true,
     },
     ["code_actions.disable_rule_comment.enable"] = {
       tbl["code_actions.disable_rule_comment.enable"],
       "boolean",
-      true
+      true,
     },
     ["code_actions.disable_rule_comment.location"] = {
       tbl["code_actions.disable_rule_comment.location"],
       function(val)
         return val == nil or vim.tbl_contains(disable_rule_comment_locations, val)
       end,
-      table.concat(disable_rule_comment_locations, ", ")
+      table.concat(disable_rule_comment_locations, ", "),
     },
     ["diagnostics.enable"] = {
       tbl["diagnostics.enable"],
       "boolean",
-      true
+      true,
     },
   }
 
   if type(key) == "string" then
     return {
-      [key] = argmap[key]
+      [key] = argmap[key],
     }
   end
 
