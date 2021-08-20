@@ -179,16 +179,25 @@ local function create_diagnostic(message)
 end
 
 function M.diagnostic_handler(params)
-  local diagnostics = {}
+  params.messages = params.output and params.output[1] and params.output[1].messages or {}
+
   if params.err then
-    params.messages = { { message = params.err } }
+    table.insert(params.messages, { message = params.err })
   end
 
-  for _, message in ipairs(params.messages) do
-    table.insert(diagnostics, create_diagnostic(message))
-  end
+  local helper = require("null-ls.helpers").diagnostics
 
-  return diagnostics
+  local parser = helper.from_json({
+    attributes = {
+      severity = "severity",
+    },
+    severities = {
+      helper.severities["warning"],
+      helper.severities["error"],
+    },
+  })
+
+  return parser({ output = params.messages })
 end
 
 local function get_working_directory()
