@@ -38,12 +38,6 @@ function M.setup()
     return
   end
 
-  local sources = {}
-
-  local function add_source(method, generator)
-    table.insert(sources, { method = method, generator = generator })
-  end
-
   if not eslint_enabled() then
     return
   end
@@ -75,19 +69,23 @@ function M.setup()
 
   if options.get("code_actions.enable") then
     local method = null_ls.methods.CODE_ACTION
-    add_source(method, null_ls.generator(make_eslint_opts(utils.code_action_handler, method)))
+    local generator = null_ls.generator(make_eslint_opts(utils.code_action_handler, method))
+    null_ls.register({
+      filetypes = utils.supported_filetypes,
+      name = name,
+      method = method,
+      generator = generator,
+    })
   end
 
   if options.get("diagnostics.enable") then
     local method = null_ls.methods.DIAGNOSTICS
-    add_source(method, null_ls.generator(make_eslint_opts(utils.diagnostic_handler, method)))
-  end
-
-  if vim.tbl_count(sources) > 0 then
+    local generator = null_ls.generator(make_eslint_opts(utils.diagnostic_handler, method))
     null_ls.register({
       filetypes = utils.supported_filetypes,
       name = name,
-      sources = sources,
+      method = method,
+      generator = generator,
     })
   end
 end

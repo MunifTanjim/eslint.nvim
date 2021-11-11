@@ -161,30 +161,6 @@ function M.code_action_handler(params)
   return actions
 end
 
--- eslint severity can be:
---   1: warning
---   2: error
--- lsp severity is the opposite
-local lsp_severity_by_eslint_severity = {
-  [1] = 2,
-  [2] = 1,
-}
-
-local function create_diagnostic(message)
-  local range = get_message_range(message)
-
-  return {
-    message = message.message,
-    code = message.ruleId,
-    row = range.row + 1,
-    col = range.col,
-    end_row = range.end_row + 1,
-    end_col = range.end_col,
-    severity = lsp_severity_by_eslint_severity[message.severity],
-    source = "eslint",
-  }
-end
-
 function M.diagnostic_handler(params)
   params.messages = params.output and params.output[1] and params.output[1].messages or {}
 
