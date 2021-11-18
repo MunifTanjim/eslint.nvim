@@ -3,11 +3,11 @@ local ok, null_ls = pcall(require, "null-ls")
 local options = require("eslint.options")
 local utils = require("eslint.utils")
 
-local function get_on_output_fn(callback, handle_errors)
+local function get_on_output_fn(callback, is_diagnostics)
   return function(params)
     local output, err = params.output, params.err
 
-    if err and handle_errors then
+    if err and is_diagnostics then
       return callback(params)
     end
 
@@ -61,15 +61,15 @@ function M.setup()
     use_cache = true,
   }
 
-  local function make_eslint_opts(handler, method)
+  local function make_eslint_opts(handler, is_diagnostics)
     local opts = vim.deepcopy(eslint_opts)
-    opts.on_output = get_on_output_fn(handler, method == null_ls.methods.DIAGNOSTICS)
+    opts.on_output = get_on_output_fn(handler, is_diagnostics)
     return opts
   end
 
   if options.get("code_actions.enable") then
     local method = null_ls.methods.CODE_ACTION
-    local generator = null_ls.generator(make_eslint_opts(utils.code_action_handler, method))
+    local generator = null_ls.generator(make_eslint_opts(utils.code_action_handler))
     null_ls.register({
       filetypes = utils.supported_filetypes,
       name = name,
@@ -80,7 +80,11 @@ function M.setup()
 
   if options.get("diagnostics.enable") then
     local method = null_ls.methods.DIAGNOSTICS
-    local generator = null_ls.generator(make_eslint_opts(utils.diagnostic_handler, method))
+    if options.get("diagnostics.run_on") == "save" then
+      method = null_ls.methods.DIAGNOSTICS_ON_SAVE
+    end
+
+    local generator = null_ls.generator(make_eslint_opts(utils.diagnostic_handler, true))
     null_ls.register({
       filetypes = utils.supported_filetypes,
       name = name,

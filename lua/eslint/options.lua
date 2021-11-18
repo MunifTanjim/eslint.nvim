@@ -18,6 +18,7 @@ local args_by_bin = {
   eslint_d = { "-f", "json", "--stdin", "--stdin-filename", "$FILENAME" },
 }
 local disable_rule_comment_locations = { "same_line", "separate_line" }
+local run_ons = { "save", "type" }
 
 local default_options = {
   _initialized = false,
@@ -32,6 +33,7 @@ local default_options = {
   },
   diagnostics = {
     enable = true,
+    run_on = "type",
   },
 }
 
@@ -65,6 +67,13 @@ local function get_validate_argmap(tbl, key)
       tbl["diagnostics.enable"],
       "boolean",
       true,
+    },
+    ["diagnostics.run_on"] = {
+      tbl["diagnostics.run_on"],
+      function(val)
+        return val == nil or vim.tbl_contains(run_ons, val)
+      end,
+      table.concat(run_ons, ", "),
     },
   }
 
