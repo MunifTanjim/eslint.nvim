@@ -5,6 +5,14 @@ local options = require("eslint.options")
 
 local M = {}
 
+local function get_messages(output)
+  if output and output[1] and output[1].messages then
+    return output[1].messages
+  end
+
+  return {}
+end
+
 local function get_col(line_len, line_offset, offset)
   for i = 0, line_len do
     local char_offset = line_offset + i
@@ -137,8 +145,10 @@ function M.code_action_handler(params)
     indentation = ""
   end
 
+  local messages = get_messages(params.output)
+
   local rules, actions = {}, {}
-  for _, message in ipairs(params.messages) do
+  for _, message in ipairs(messages) do
     if is_fixable(message, row - 1) then
       if message.suggestions then
         for _, suggestion in ipairs(message.suggestions) do
@@ -162,10 +172,10 @@ function M.code_action_handler(params)
 end
 
 function M.diagnostic_handler(params)
-  params.messages = params.output and params.output[1] and params.output[1].messages or {}
+  local messages = get_messages(params.output)
 
   if params.err then
-    table.insert(params.messages, { message = params.err })
+    table.insert(messages, { message = params.err })
   end
 
   local helper = require("null-ls.helpers").diagnostics
@@ -180,7 +190,7 @@ function M.diagnostic_handler(params)
     },
   })
 
-  return parser({ output = params.messages })
+  return parser({ output = messages })
 end
 
 local function get_working_directory()

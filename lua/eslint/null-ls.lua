@@ -3,24 +3,6 @@ local ok, null_ls = pcall(require, "null-ls")
 local options = require("eslint.options")
 local utils = require("eslint.utils")
 
-local function get_on_output_fn(callback, is_diagnostics)
-  return function(params)
-    local output, err = params.output, params.err
-
-    if err and is_diagnostics then
-      return callback(params)
-    end
-
-    if not (output and output[1] and output[1].messages) then
-      return
-    end
-
-    params.messages = output[1].messages
-
-    return callback(params)
-  end
-end
-
 local function eslint_enabled()
   return utils.config_file_exists()
 end
@@ -61,9 +43,9 @@ function M.setup()
     use_cache = true,
   }
 
-  local function make_eslint_opts(handler, is_diagnostics)
+  local function make_eslint_opts(handler)
     local opts = vim.deepcopy(eslint_opts)
-    opts.on_output = get_on_output_fn(handler, is_diagnostics)
+    opts.on_output = handler
     return opts
   end
 
@@ -84,7 +66,7 @@ function M.setup()
       method = null_ls.methods.DIAGNOSTICS_ON_SAVE
     end
 
-    local generator = null_ls.generator(make_eslint_opts(utils.diagnostic_handler, true))
+    local generator = null_ls.generator(make_eslint_opts(utils.diagnostic_handler))
     null_ls.register({
       filetypes = utils.supported_filetypes,
       name = name,
