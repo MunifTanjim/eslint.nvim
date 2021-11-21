@@ -60,6 +60,41 @@ function M.setup()
     })
   end
 
+  if options.get("code_actions.apply_on_save.enable") then
+    local method = null_ls.methods.FORMATTING
+    local opts = vim.deepcopy(eslint_opts)
+    opts.command = function(params)
+      local bufnr = params.bufnr
+      local diagnostics = vim.diagnostic.get(bufnr, {
+        severity = vim.diagnostic.severity.ERROR,
+      })
+      print(vim.inspect(diagnostics))
+      local actions = vim.lsp.buf.code_action({
+        diagnostics = diagnostics,
+      })
+      print(vim.inspect(actions))
+    end
+    opts.args = {}
+    opts.on_output = function(params, done)
+      print("on_output", vim.inspect(params))
+
+      local output = params.output
+
+      if not output then
+        return done()
+      end
+
+      done({})
+    end
+    local generator = null_ls.generator(opts)
+    null_ls.register({
+      filetypes = utils.supported_filetypes,
+      name = name,
+      method = method,
+      generator = generator,
+    })
+  end
+
   if options.get("diagnostics.enable") then
     local method = null_ls.methods.DIAGNOSTICS
     if options.get("diagnostics.run_on") == "save" then

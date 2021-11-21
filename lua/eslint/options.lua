@@ -17,6 +17,7 @@ local args_by_bin = {
   eslint = { "-f", "json", "--stdin", "--stdin-filename", "$FILENAME" },
   eslint_d = { "-f", "json", "--stdin", "--stdin-filename", "$FILENAME" },
 }
+local apply_on_save_types = { "problem", "suggestion", "layout" }
 local disable_rule_comment_locations = { "same_line", "separate_line" }
 local run_ons = { "save", "type" }
 
@@ -26,6 +27,10 @@ local default_options = {
   args = args_by_bin["eslint"],
   code_actions = {
     enable = true,
+    apply_on_save = {
+      enable = true,
+      type = { "problem" },
+    },
     disable_rule_comment = {
       enable = true,
       location = "separate_line",
@@ -50,6 +55,18 @@ local function get_validate_argmap(tbl, key)
       tbl["code_actions.enable"],
       "boolean",
       true,
+    },
+    ["code_actions.apply_on_save.enable"] = {
+      tbl["code_actions.apply_on_save.enable"],
+      "boolean",
+      true,
+    },
+    ["code_actions.apply_on_save.type"] = {
+      tbl["code_actions.apply_on_save.type"],
+      function(val)
+        return val == nil or vim.tbl_contains(apply_on_save_types, val)
+      end,
+      table.concat(apply_on_save_types, ", "),
     },
     ["code_actions.disable_rule_comment.enable"] = {
       tbl["code_actions.disable_rule_comment.enable"],
