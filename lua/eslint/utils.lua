@@ -146,6 +146,12 @@ function M.get_cli_args(bin, method)
 
   local args = { "--format", "json" }
 
+  if method == methods.FORMATTING then
+    table.insert(args, "--fix-dry-run")
+    table.insert(args, "--fix-type")
+    table.insert(args, table.concat(options.get("code_actions.apply_on_save.types"), ","))
+  end
+
   if options.get("diagnostics.report_unused_disable_directives") then
     table.insert(args, "--report-unused-disable-directives")
   end
@@ -210,6 +216,25 @@ function M.diagnostic_handler(params)
   })
 
   return parser({ output = messages })
+end
+
+function M.formatting_handler(params)
+  local output = params.output
+  local content = output and output[1] and output[1].output
+
+  if not content then
+    return
+  end
+
+  return {
+    {
+      row = 1,
+      col = 1,
+      end_row = #vim.split(content, "\n") + 1,
+      end_col = 1,
+      text = content,
+    },
+  }
 end
 
 local function get_working_directory()

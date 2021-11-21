@@ -60,6 +60,22 @@ function M.setup()
     })
   end
 
+  if options.get("code_actions.apply_on_save.enable") then
+    local method = null_ls.methods.FORMATTING
+
+    local opts = make_eslint_opts(utils.formatting_handler, method)
+    opts.check_exit_code = nil
+    opts.use_cache = nil
+
+    local generator = null_ls.generator(opts)
+    null_ls.register({
+      filetypes = utils.supported_filetypes,
+      name = name,
+      method = method,
+      generator = generator,
+    })
+  end
+
   if options.get("diagnostics.enable") then
     local method = null_ls.methods.DIAGNOSTICS
     if options.get("diagnostics.run_on") == "save" then

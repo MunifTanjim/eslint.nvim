@@ -13,6 +13,7 @@ local function tbl_flatten(tbl, result, prefix, depth)
 end
 
 local bins = { "eslint", "eslint_d" }
+local apply_on_save_types = { "directive", "problem", "suggestion", "layout" }
 local disable_rule_comment_locations = { "same_line", "separate_line" }
 local run_ons = { "save", "type" }
 
@@ -21,6 +22,10 @@ local default_options = {
   bin = "eslint",
   code_actions = {
     enable = true,
+    apply_on_save = {
+      enable = true,
+      types = { "problem" },
+    },
     disable_rule_comment = {
       enable = true,
       location = "separate_line",
@@ -46,6 +51,32 @@ local function get_validate_argmap(tbl, key)
       tbl["code_actions.enable"],
       "boolean",
       true,
+    },
+    ["code_actions.apply_on_save.enable"] = {
+      tbl["code_actions.apply_on_save.enable"],
+      "boolean",
+      true,
+    },
+    ["code_actions.apply_on_save.types"] = {
+      tbl["code_actions.apply_on_save.types"],
+      function(val)
+        if val == nil then
+          return true
+        end
+
+        if type(val) ~= "table" then
+          return false, "invalid type: " .. type(val)
+        end
+
+        for _, t in ipairs(val) do
+          if not vim.tbl_contains(apply_on_save_types, t) then
+            return false, "invalid value: " .. t
+          end
+        end
+
+        return true
+      end,
+      "table containing " .. table.concat(apply_on_save_types, ", "),
     },
     ["code_actions.disable_rule_comment.enable"] = {
       tbl["code_actions.disable_rule_comment.enable"],
