@@ -13,17 +13,12 @@ local function tbl_flatten(tbl, result, prefix, depth)
 end
 
 local bins = { "eslint", "eslint_d" }
-local args_by_bin = {
-  eslint = { "-f", "json", "--stdin", "--stdin-filename", "$FILENAME" },
-  eslint_d = { "-f", "json", "--stdin", "--stdin-filename", "$FILENAME" },
-}
 local disable_rule_comment_locations = { "same_line", "separate_line" }
 local run_ons = { "save", "type" }
 
 local default_options = {
   _initialized = false,
   bin = "eslint",
-  args = args_by_bin["eslint"],
   code_actions = {
     enable = true,
     disable_rule_comment = {
@@ -110,11 +105,6 @@ function M.setup(user_options)
   validate_options(user_options)
 
   options = vim.tbl_deep_extend("force", options, user_options)
-  options.args = options.bin and args_by_bin[options.bin]
-
-  if options["diagnostics.report_unused_disable_directives"] then
-    table.insert(options.args, "--report-unused-disable-directives")
-  end
 
   options._initialized = true
 end

@@ -34,7 +34,6 @@ function M.setup()
 
   local eslint_opts = {
     command = command,
-    args = options.get("args"),
     format = "json_raw",
     to_stdin = true,
     check_exit_code = function(code)
@@ -43,15 +42,16 @@ function M.setup()
     use_cache = true,
   }
 
-  local function make_eslint_opts(handler)
+  local function make_eslint_opts(handler, method)
     local opts = vim.deepcopy(eslint_opts)
+    opts.args = utils.get_cli_args(eslint_bin, method)
     opts.on_output = handler
     return opts
   end
 
   if options.get("code_actions.enable") then
     local method = null_ls.methods.CODE_ACTION
-    local generator = null_ls.generator(make_eslint_opts(utils.code_action_handler))
+    local generator = null_ls.generator(make_eslint_opts(utils.code_action_handler, method))
     null_ls.register({
       filetypes = utils.supported_filetypes,
       name = name,
@@ -66,7 +66,7 @@ function M.setup()
       method = null_ls.methods.DIAGNOSTICS_ON_SAVE
     end
 
-    local generator = null_ls.generator(make_eslint_opts(utils.diagnostic_handler))
+    local generator = null_ls.generator(make_eslint_opts(utils.diagnostic_handler, method))
     null_ls.register({
       filetypes = utils.supported_filetypes,
       name = name,

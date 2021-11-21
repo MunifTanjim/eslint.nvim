@@ -3,8 +3,6 @@ local find_package_json_ancestor = require("lspconfig.util").find_package_json_a
 local path_join = require("lspconfig.util").path.join
 local options = require("eslint.options")
 
-local M = {}
-
 local function get_messages(output)
   if output and output[1] and output[1].messages then
     return output[1].messages
@@ -136,6 +134,27 @@ local function generate_disable_actions(message, indentation, params)
   table.insert(actions, generate_edit_line_action(file_title, file_new_text, 0, params))
 
   return actions
+end
+
+local M = {}
+
+---@param bin string
+---@param method string
+---@return string[]
+function M.get_cli_args(bin, method)
+  local methods = require("null-ls").methods
+
+  local args = { "--format", "json" }
+
+  if options.get("diagnostics.report_unused_disable_directives") then
+    table.insert(args, "--report-unused-disable-directives")
+  end
+
+  table.insert(args, "--stdin")
+  table.insert(args, "--stdin-filename")
+  table.insert(args, "$FILENAME")
+
+  return args
 end
 
 function M.code_action_handler(params)
