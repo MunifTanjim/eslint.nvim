@@ -33,6 +33,7 @@ local default_options = {
   },
   diagnostics = {
     enable = true,
+    report_unused_disable_directives = false,
     run_on = "type",
   },
 }
@@ -65,6 +66,11 @@ local function get_validate_argmap(tbl, key)
     },
     ["diagnostics.enable"] = {
       tbl["diagnostics.enable"],
+      "boolean",
+      true,
+    },
+    ["diagnostics.report_unused_disable_directives"] = {
+      tbl["diagnostics.report_unused_disable_directives"],
       "boolean",
       true,
     },
@@ -105,6 +111,10 @@ function M.setup(user_options)
 
   options = vim.tbl_deep_extend("force", options, user_options)
   options.args = options.bin and args_by_bin[options.bin]
+
+  if options["diagnostics.report_unused_disable_directives"] then
+    table.insert(options.args, "--report-unused-disable-directives")
+  end
 
   options._initialized = true
 end

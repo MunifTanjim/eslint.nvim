@@ -41,6 +41,7 @@ eslint.setup({
   },
   diagnostics = {
     enable = true,
+    report_unused_disable_directives = false,
     run_on = "type", -- or `save`
   },
 })
