@@ -11,31 +11,6 @@ local function get_messages(output)
   return {}
 end
 
-local function get_col(line_len, line_offset, offset)
-  for i = 0, line_len do
-    local char_offset = line_offset + i
-    if char_offset == offset then
-      return i
-    end
-  end
-end
-
-local function convert_offset(row, params, start_offset, end_offset)
-  local start_line_offset = vim.api.nvim_buf_get_offset(params.bufnr, row)
-  local start_line_len = #params.content[row + 1]
-
-  local end_line_offset, end_row = start_line_offset, row
-  while end_line_offset + #params.content[end_row + 1] < end_offset do
-    end_row = end_row + 1
-    end_line_offset = vim.api.nvim_buf_get_offset(params.bufnr, end_row)
-  end
-  local end_line_len = #params.content[end_row + 1]
-
-  local start_col = get_col(start_line_len, start_line_offset, start_offset)
-  local end_col = get_col(end_line_len, end_line_offset, end_offset)
-  return start_col, end_col, end_row
-end
-
 local function is_fixable(problem, row)
   if not problem or not problem.line then
     return false
@@ -61,12 +36,24 @@ local function get_message_range(problem)
 end
 
 local function get_fix_range(problem, params)
-  local row = problem.line - 1
-  local offset = problem.fix.range[1]
-  local end_offset = problem.fix.range[2]
-  local col, end_col, end_row = convert_offset(row, params, offset, end_offset)
+  local content = table.concat(params.content, "\n")
 
-  return { row = row, col = col, end_row = end_row, end_col = end_col }
+  local start_offset = vim.str_byteindex(content, problem.fix.range[1], true)
+  local end_offset = vim.str_byteindex(content, problem.fix.range[2], true)
+
+  local lines_from_start_to_start_offset = vim.fn.split(vim.fn.strpart(content, 0, start_offset), "\n")
+  local lines_from_start_offset_to_end_offset = vim.fn.split(
+    vim.fn.strpart(content, start_offset, end_offset - start_offset),
+    "\n"
+  )
+
+  local start_row = #lines_from_start_to_start_offset - 1
+  local end_row = start_row + #lines_from_start_offset_to_end_offset - 1
+
+  local start_col = #lines_from_start_to_start_offset[#lines_from_start_to_start_offset]
+  local end_col = #lines_from_start_offset_to_end_offset[#lines_from_start_offset_to_end_offset]
+
+  return { row = start_row, col = start_col, end_row = end_row, end_col = end_col }
 end
 
 local function generate_edit_action(title, new_text, range, params)
