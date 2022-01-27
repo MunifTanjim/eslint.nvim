@@ -59,10 +59,12 @@ local function get_fix_range(problem, params)
   local end_col
   if start_offset == end_offset then
     end_col = start_col
-  elseif start_row == end_row then
-    end_col = start_col + end_col
   else
     end_col = #lines_from_start_offset_to_end_offset[#lines_from_start_offset_to_end_offset]
+
+    if start_row == end_row then
+      end_col = start_col + end_col
+    end
   end
 
   return { row = start_row, col = start_col, end_row = end_row, end_col = end_col }
