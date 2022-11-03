@@ -24,33 +24,47 @@ function M.setup()
     return
   end
 
-  local eslint_bin = options.get("bin")
+  local bin = options.get("bin") --[[@as string]]
 
-  local command = utils.resolve_bin(eslint_bin)
+  local command = utils.resolve_bin(bin)
 
   if not command then
     return
   end
 
-  local eslint_opts = {
-    command = command,
-    format = "json_raw",
-    to_stdin = true,
-    check_exit_code = function(code)
-      return code <= 1
-    end,
-    use_cache = true,
-  }
-
   local function make_eslint_opts(handler, method)
-    local opts = vim.deepcopy(eslint_opts)
-    opts.args = utils.get_cli_args(eslint_bin, method)
-    opts.on_output = handler
+    local opts = {
+      args = utils.get_cli_args(bin, method),
+      command = command,
+      on_output = handler,
+      to_stdin = true,
+    }
+
+    if method == null_ls.methods.CODE_ACTION then
+      opts.check_exit_code = { 0, 1 }
+      opts.format = "json_raw"
+      opts.use_cache = true
+    elseif method == null_ls.methods.DIAGNOSTICS or method == null_ls.methods.DIAGNOSTICS_ON_SAVE then
+      opts.check_exit_code = function(code)
+        return code <= 1
+      end
+      opts.format = "json_raw"
+      opts.use_cache = true
+    elseif method == null_ls.methods.FORMATTING then
+      if bin == "eslint" then
+        opts.check_exit_code = { 0, 1 }
+        opts.format = "json"
+      else
+        opts.ignore_stderr = true
+      end
+    end
+
     return opts
   end
 
   if options.get("code_actions.enable") then
     local method = null_ls.methods.CODE_ACTION
+
     local generator = null_ls.generator(make_eslint_opts(utils.code_action_handler, method))
     null_ls.register({
       filetypes = utils.supported_filetypes,
@@ -63,11 +77,7 @@ function M.setup()
   if options.get("code_actions.apply_on_save.enable") then
     local method = null_ls.methods.FORMATTING
 
-    local opts = make_eslint_opts(utils.formatting_handler, method)
-    opts.check_exit_code = nil
-    opts.use_cache = nil
-
-    local generator = null_ls.generator(opts)
+    local generator = null_ls.generator(make_eslint_opts(utils.formatting_handler[bin], method))
     null_ls.register({
       filetypes = utils.supported_filetypes,
       name = name,
