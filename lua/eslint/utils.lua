@@ -38,8 +38,8 @@ end
 local function get_fix_range(problem, params)
   local content = table.concat(params.content, "\n")
 
-  local start_offset = vim.str_byteindex(content, problem.fix.range[1], true)
-  local end_offset = vim.str_byteindex(content, problem.fix.range[2], true)
+  local start_offset = vim.str_byteindex(content, problem.fix.range[1], true) --[[@as integer]]
+  local end_offset = vim.str_byteindex(content, problem.fix.range[2], true) --[[@as integer]]
 
   local lines_from_start_to_start_offset = vim.fn.split(vim.fn.strpart(content, 0, start_offset), "\n")
   local lines_from_start_offset_to_end_offset = vim.fn.split(
@@ -148,9 +148,16 @@ function M.get_cli_args(bin, method)
   local args = { "--format", "json" }
 
   if method == methods.FORMATTING then
-    table.insert(args, "--fix-dry-run")
-    table.insert(args, "--fix-type")
-    table.insert(args, table.concat(options.get("code_actions.apply_on_save.types"), ","))
+    if bin == "eslint_d" then
+      table.insert(args, "--fix-to-stdout")
+    else
+      table.insert(args, "--fix-dry-run")
+    end
+    local code_action_types = options.get("code_actions.apply_on_save.types")
+    if #code_action_types > 0 then
+      table.insert(args, "--fix-type")
+      table.insert(args, table.concat(code_action_types, ","))
+    end
   end
 
   if options.get("diagnostics.report_unused_disable_directives") then
@@ -165,13 +172,17 @@ function M.get_cli_args(bin, method)
 end
 
 function M.code_action_handler(params)
+  local messages = get_messages(params.output)
+
+  if not messages[1] then
+    return
+  end
+
   local row = params.row
   local indentation = string.match(params.content[row], "^%s+")
   if not indentation then
     indentation = ""
   end
-
-  local messages = get_messages(params.output)
 
   local rules, actions = {}, {}
   for _, message in ipairs(messages) do
@@ -219,7 +230,9 @@ function M.diagnostic_handler(params)
   return parser({ output = messages })
 end
 
-function M.formatting_handler(params)
+M.formatting_handler = {}
+
+function M.formatting_handler.eslint(params)
   local output = params.output
   local content = output and output[1] and output[1].output
 
@@ -236,6 +249,15 @@ function M.formatting_handler(params)
       text = content,
     },
   }
+end
+
+function M.formatting_handler.eslint_d(params, done)
+  local output = params.output
+  if not output then
+    return done()
+  end
+
+  return done({ { text = output } })
 end
 
 local function get_working_directory()
