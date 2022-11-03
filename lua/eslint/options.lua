@@ -24,7 +24,7 @@ local default_options = {
     enable = true,
     apply_on_save = {
       enable = true,
-      types = { "problem" },
+      types = {},
     },
     disable_rule_comment = {
       enable = true,
