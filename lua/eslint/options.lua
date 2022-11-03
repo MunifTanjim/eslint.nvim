@@ -131,7 +131,7 @@ function M.setup(user_options)
     return
   end
 
-  user_options = tbl_flatten(user_options)
+  user_options = tbl_flatten(user_options or {})
 
   validate_options(user_options)
 
