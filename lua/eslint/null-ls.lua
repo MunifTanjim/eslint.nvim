@@ -32,6 +32,10 @@ function M.setup()
     return
   end
 
+  if string.sub(bin, -8) == "eslint_d" then
+    vim.env.ESLINT_D_PPID = vim.uv.os_getpid()
+  end
+
   local function make_eslint_opts(handler, method)
     local opts = {
       args = utils.get_cli_args(bin, method),
