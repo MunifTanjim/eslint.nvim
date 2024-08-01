@@ -148,11 +148,7 @@ function M.get_cli_args(bin, method)
   local args = { "--format", "json" }
 
   if method == methods.FORMATTING then
-    if bin == "eslint_d" then
-      table.insert(args, "--fix-to-stdout")
-    else
-      table.insert(args, "--fix-dry-run")
-    end
+    table.insert(args, "--fix-dry-run")
     local code_action_types = options.get("code_actions.apply_on_save.types")
     if #code_action_types > 0 then
       table.insert(args, "--fix-type")
@@ -230,9 +226,7 @@ function M.diagnostic_handler(params)
   return parser({ output = messages })
 end
 
-M.formatting_handler = {}
-
-function M.formatting_handler.eslint(params)
+function M.formatting_handler(params)
   local output = params.output
   local content = output and output[1] and output[1].output
 
@@ -251,15 +245,6 @@ function M.formatting_handler.eslint(params)
   }
 end
 
-function M.formatting_handler.eslint_d(params, done)
-  local output = params.output
-  if not output then
-    return done()
-  end
-
-  return done({ { text = output } })
-end
-
 local function get_working_directory()
   local startpath = vim.fn.getcwd()
   return find_git_ancestor(startpath) or find_package_json_ancestor(startpath)
@@ -270,6 +255,7 @@ function M.config_file_exists()
 
   if project_root then
     return vim.tbl_count(vim.fn.glob(".eslintrc*", true, true)) > 0
+      or vim.tbl_count(vim.fn.glob("eslint.config.*", true, true)) > 0
   end
 
   return false
