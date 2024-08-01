@@ -51,12 +51,8 @@ function M.setup()
       opts.format = "json_raw"
       opts.use_cache = true
     elseif method == null_ls.methods.FORMATTING then
-      if bin == "eslint" then
-        opts.check_exit_code = { 0, 1 }
-        opts.format = "json"
-      else
-        opts.ignore_stderr = true
-      end
+      opts.check_exit_code = { 0, 1 }
+      opts.format = "json"
     end
 
     return opts
@@ -77,7 +73,7 @@ function M.setup()
   if options.get("code_actions.apply_on_save.enable") then
     local method = null_ls.methods.FORMATTING
 
-    local generator = null_ls.generator(make_eslint_opts(utils.formatting_handler[bin], method))
+    local generator = null_ls.generator(make_eslint_opts(utils.formatting_handler, method))
     null_ls.register({
       filetypes = utils.supported_filetypes,
       name = name,
