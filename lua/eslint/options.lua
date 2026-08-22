@@ -1,9 +1,14 @@
+local islist = vim.islist
+if not islist then
+  islist = vim.tbl_islist
+end
+
 local function tbl_flatten(tbl, result, prefix, depth)
   result = result or {}
   prefix = prefix or ""
   depth = type(depth) == "number" and depth or 1
   for k, v in pairs(tbl) do
-    if type(v) == "table" and not vim.tbl_islist(v) and depth < 42 then
+    if type(v) == "table" and not islist(v) and depth < 42 then
       tbl_flatten(v, result, prefix .. k .. ".", depth + 1)
     else
       result[prefix .. k] = v
